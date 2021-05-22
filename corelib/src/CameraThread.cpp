@@ -67,7 +67,8 @@ CameraThread::CameraThread(Camera * camera, const ParametersMap & parameters) :
 		_bilateralFiltering(false),
 		_bilateralSigmaS(10),
 		_bilateralSigmaR(0.1),
-		_imuFilter(0)
+		_imuFilter(0),
+		_imuBaseFrameConversion(false)
 {
 	UASSERT(_camera != 0);
 }
@@ -117,10 +118,11 @@ void CameraThread::enableBilateralFiltering(float sigmaS, float sigmaR)
 	_bilateralSigmaR = sigmaR;
 }
 
-void CameraThread::enableIMUFiltering(int filteringStrategy, const ParametersMap & parameters)
+void CameraThread::enableIMUFiltering(int filteringStrategy, const ParametersMap & parameters, bool baseFrameConversion)
 {
 	delete _imuFilter;
 	_imuFilter = IMUFilter::create((IMUFilter::Type)filteringStrategy, parameters);
+	_imuBaseFrameConversion = baseFrameConversion;
 }
 
 void CameraThread::disableIMUFiltering()
@@ -174,7 +176,7 @@ void CameraThread::mainLoop()
 	CameraInfo info;
 	SensorData data = _camera->takeImage(&info);
 
-	if(!data.imageRaw().empty() || (dynamic_cast<DBReader*>(_camera) != 0 && data.id()>0)) // intermediate nodes could not have image set
+	if(!data.imageRaw().empty() || !data.laserScanRaw().empty() || (dynamic_cast<DBReader*>(_camera) != 0 && data.id()>0)) // intermediate nodes could not have image set
 	{
 		postUpdate(&data, &info);
 
@@ -406,9 +408,8 @@ void CameraThread::postUpdate(SensorData * dataPtr, CameraInfo * info) const
 					_scanRangeMin,
 					validIndices.get());
 			float maxPoints = (data.depthRaw().rows/_scanDownsampleStep)*(data.depthRaw().cols/_scanDownsampleStep);
-			cv::Mat scan;
+			LaserScan scan;
 			const Transform & baseToScan = data.cameraModels()[0].localTransform();
-			LaserScan::Format format = LaserScan::kXYZRGB;
 			if(validIndices->size())
 			{
 				if(_scanVoxelSize>0.0f)
@@ -433,7 +434,6 @@ void CameraThread::postUpdate(SensorData * dataPtr, CameraInfo * info) const
 						pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr cloudNormals(new pcl::PointCloud<pcl::PointXYZRGBNormal>);
 						pcl::concatenateFields(*cloud, *normals, *cloudNormals);
 						scan = util3d::laserScanFromPointCloud(*cloudNormals, baseToScan.inverse());
-						format = LaserScan::kXYZRGBNormal;
 					}
 					else
 					{
@@ -441,7 +441,7 @@ void CameraThread::postUpdate(SensorData * dataPtr, CameraInfo * info) const
 					}
 				}
 			}
-			data.setLaserScan(LaserScan(scan, (int)maxPoints, _scanRangeMax, format, baseToScan));
+			data.setLaserScan(LaserScan(scan, (int)maxPoints, _scanRangeMax, baseToScan));
 			if(info) info->timeScanFromDepth = timer.ticks();
 		}
 		else
@@ -472,21 +472,31 @@ void CameraThread::postUpdate(SensorData * dataPtr, CameraInfo * info) const
 		}
 		else
 		{
+			// Transform IMU data in base_link to correctly initialize yaw
+			IMU imu = data.imu();
+			if(_imuBaseFrameConversion)
+			{
+				UASSERT(!data.imu().localTransform().isNull());
+				imu.convertToBaseFrame();
+
+			}
 			_imuFilter->update(
-					data.imu().angularVelocity()[0],
-					data.imu().angularVelocity()[1],
-					data.imu().angularVelocity()[2],
-					data.imu().linearAcceleration()[0],
-					data.imu().linearAcceleration()[1],
-					data.imu().linearAcceleration()[2],
+					imu.angularVelocity()[0],
+					imu.angularVelocity()[1],
+					imu.angularVelocity()[2],
+					imu.linearAcceleration()[0],
+					imu.linearAcceleration()[1],
+					imu.linearAcceleration()[2],
 					data.stamp());
 			double qx,qy,qz,qw;
 			_imuFilter->getOrientation(qx,qy,qz,qw);
+
 			data.setIMU(IMU(
 					cv::Vec4d(qx,qy,qz,qw), cv::Mat::eye(3,3,CV_64FC1),
-					data.imu().angularVelocity(), data.imu().angularVelocityCovariance(),
-					data.imu().linearAcceleration(), data.imu().linearAccelerationCovariance(),
-					data.imu().localTransform()));
+					imu.angularVelocity(), imu.angularVelocityCovariance(),
+					imu.linearAcceleration(), imu.linearAccelerationCovariance(),
+					imu.localTransform()));
+
 			UDEBUG("%f %f %f %f (gyro=%f %f %f, acc=%f %f %f, %fs)",
 						data.imu().orientation()[0],
 						data.imu().orientation()[1],

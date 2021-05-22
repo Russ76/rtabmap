@@ -2,29 +2,28 @@ language: cpp
    
 jobs:
   include:
-    - name: osx
-      compiler: clang
-      os: osx
-      install:
-        - travis_wait 40 brew install boost
-        - travis_wait 40 brew install pcl
-        - travis_wait 30 brew install opencv
-        - brew install pcl sqlite
+#    - name: osx
+#      compiler: clang
+#      os: osx
+#      install:
+#        - brew install sqlite
+#        - brew install pcl
+#        - brew install opencv@3
     
-    - name: linux-trusty
-      compiler: gcc
-      os: linux
-      dist: trusty
-      install:
-        - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu trusty main" > /etc/apt/sources.list.d/ros-latest.list'
-        - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
-        - sudo apt-get update
-        - sudo apt-get update && sudo apt-get install dpkg
-        - sudo apt-get -y install ros-indigo-rtabmap-ros
-        - sudo apt-get -y remove ros-indigo-rtabmap
-
-      before_script: 
-        - source /opt/ros/indigo/setup.bash
+#    - name: linux-trusty
+#      compiler: gcc
+#      os: linux
+#      dist: trusty
+#      install:
+#        - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu trusty main" > /etc/apt/sources.list.d/ros-latest.list'
+#        - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
+#        - sudo apt-get update
+#        - sudo apt-get update && sudo apt-get install dpkg
+#        - sudo apt-get -y install ros-indigo-rtabmap-ros
+#        - sudo apt-get -y remove ros-indigo-rtabmap
+#
+#      before_script: 
+#        - source /opt/ros/indigo/setup.bash
 
     - name: linux-xenial
       compiler: gcc

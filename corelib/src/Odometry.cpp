@@ -32,10 +32,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "rtabmap/core/odometry/OdometryViso2.h"
 #include "rtabmap/core/odometry/OdometryDVO.h"
 #include "rtabmap/core/odometry/OdometryOkvis.h"
-#include "rtabmap/core/odometry/OdometryORBSLAM2.h"
+#include "rtabmap/core/odometry/OdometryORBSLAM.h"
 #include "rtabmap/core/odometry/OdometryLOAM.h"
 #include "rtabmap/core/odometry/OdometryMSCKF.h"
 #include "rtabmap/core/odometry/OdometryVINS.h"
+#include "rtabmap/core/odometry/OdometryOpenVINS.h"
 #include "rtabmap/core/OdometryInfo.h"
 #include "rtabmap/core/util3d.h"
 #include "rtabmap/core/util3d_mapping.h"
@@ -80,8 +81,8 @@ Odometry * Odometry::create(Odometry::Type & type, const ParametersMap & paramet
 	case Odometry::kTypeDVO:
 		odometry = new OdometryDVO(parameters);
 		break;
-	case Odometry::kTypeORBSLAM2:
-		odometry = new OdometryORBSLAM2(parameters);
+	case Odometry::kTypeORBSLAM:
+		odometry = new OdometryORBSLAM(parameters);
 		break;
 	case Odometry::kTypeOkvis:
 		odometry = new OdometryOkvis(parameters);
@@ -94,6 +95,9 @@ Odometry * Odometry::create(Odometry::Type & type, const ParametersMap & paramet
 		break;
 	case Odometry::kTypeVINS:
 		odometry = new OdometryVINS(parameters);
+		break;
+	case Odometry::kTypeOpenVINS:
+		odometry = new OdometryOpenVINS(parameters);
 		break;
 	default:
 		UERROR("Unknown odometry type %d, using F2M instead...", (int)type);
@@ -284,6 +288,39 @@ Transform Odometry::process(SensorData & data, const Transform & guessIn, Odomet
 {
 	UASSERT_MSG(data.id() >= 0, uFormat("Input data should have ID greater or equal than 0 (id=%d)!", data.id()).c_str());
 
+	// cache imu data
+	if(!data.imu().empty() && !this->canProcessAsyncIMU())
+	{
+		if(!(data.imu().orientation()[0] == 0.0 && data.imu().orientation()[1] == 0.0 && data.imu().orientation()[2] == 0.0))
+		{
+			Transform orientation(0,0,0, data.imu().orientation()[0], data.imu().orientation()[1], data.imu().orientation()[2], data.imu().orientation()[3]);
+			// orientation includes roll and pitch but not yaw in local transform
+			Transform imuT = Transform(data.imu().localTransform().x(),data.imu().localTransform().y(),data.imu().localTransform().z(), 0,0,data.imu().localTransform().theta()) *
+					orientation*
+					data.imu().localTransform().rotation().inverse();
+
+			IMU imu2 = data.imu();
+			imu2.convertToBaseFrame();
+
+			if(	this->getPose().r11() == 1.0f && this->getPose().r22() == 1.0f && this->getPose().r33() == 1.0f &&
+				this->framesProcessed() == 0)
+			{
+				Eigen::Quaterniond imuQuat = imuT.getQuaterniond();
+				Transform previous = this->getPose();
+				Transform newFramePose = Transform(previous.x(), previous.y(), previous.z(), imuQuat.x(), imuQuat.y(), imuQuat.z(), imuQuat.w());
+				UWARN("Updated initial pose from %s to %s with IMU orientation", previous.prettyPrint().c_str(), newFramePose.prettyPrint().c_str());
+				this->reset(newFramePose);
+			}
+
+			imus_.insert(std::make_pair(data.stamp(), imuT));
+			if(imus_.size() > 1000)
+			{
+				imus_.erase(imus_.begin());
+			}
+		}
+	}
+
+
 	if(!_imagesAlreadyRectified && !this->canProcessRawImages() && !data.imageRaw().empty())
 	{
 		if(data.stereoCameraModel().isValidForRectification())
@@ -386,21 +423,6 @@ Transform Odometry::process(SensorData & data, const Transform & guessIn, Odomet
 		}
 	}
 
-	// cache imu data
-	if(!data.imu().empty())
-	{
-		if(!(data.imu().orientation()[0] == 0.0 && data.imu().orientation()[1] == 0.0 && data.imu().orientation()[2] == 0.0))
-		{
-			Transform orientation(0,0,0, data.imu().orientation()[0], data.imu().orientation()[1], data.imu().orientation()[2], data.imu().orientation()[3]);
-			// orientation includes roll and pitch but not yaw in local transform
-			imus_.insert(std::make_pair(data.stamp(), Transform(0,0,data.imu().localTransform().theta()) * orientation*data.imu().localTransform().inverse()));
-			if(imus_.size() > 1000)
-			{
-				imus_.erase(imus_.begin());
-			}
-		}
-	}
-
 	// KITTI datasets start with stamp=0
 	double dt = previousStamp_>0.0f || (previousStamp_==0.0f && framesProcessed()==1)?data.stamp() - previousStamp_:0.0;
 	Transform guess = dt>0.0 && guessFromMotion_ && !velocityGuess_.isNull()?Transform::getIdentity():Transform();
@@ -447,7 +469,7 @@ Transform Odometry::process(SensorData & data, const Transform & guessIn, Odomet
 	{
 		guess = guessIn;
 	}
-	else if(!data.imu().empty() && !imus_.empty())
+	else if(!imus_.empty())
 	{
 		// replace orientation guess with IMU (if available)
 		imuCurrentTransform = Transform::getTransform(imus_, data.stamp());
@@ -458,6 +480,14 @@ Transform Odometry::process(SensorData & data, const Transform & guessIn, Odomet
 					orientation.r11(), orientation.r12(), orientation.r13(), guess.x(),
 					orientation.r21(), orientation.r22(), orientation.r23(), guess.y(),
 					orientation.r31(), orientation.r32(), orientation.r33(), guess.z());
+			if(_force3DoF)
+			{
+				guess = guess.to3DoF();
+			}
+		}
+		else if(!imuLastTransform_.isNull())
+		{
+			UWARN("Could not find imu transform at %f", data.stamp());
 		}
 	}
 
@@ -503,6 +533,7 @@ Transform Odometry::process(SensorData & data, const Transform & guessIn, Odomet
 			kpts[i].octave += log2value;
 		}
 		data.setFeatures(kpts, decimatedData.keypoints3D(), decimatedData.descriptors());
+		data.setLaserScan(decimatedData.laserScanRaw());
 
 		if(info)
 		{
@@ -523,7 +554,7 @@ Transform Odometry::process(SensorData & data, const Transform & guessIn, Odomet
 			}
 		}
 	}
-	else
+	else if(!data.imageRaw().empty() || !data.laserScanRaw().isEmpty() || (this->canProcessAsyncIMU() && !data.imu().empty()))
 	{
 		t = this->computeTransform(data, guess, info);
 	}
@@ -540,6 +571,7 @@ Transform Odometry::process(SensorData & data, const Transform & guessIn, Odomet
 		info->stamp = data.stamp();
 		info->interval = dt;
 		info->transform = t;
+		info->guess = guess;
 		if(_publishRAMUsage)
 		{
 			info->memoryUsage = UProcessInfo::getMemoryUsage()/(1024*1024);

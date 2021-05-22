@@ -286,8 +286,8 @@ void OccupancyGrid::createLocalMap(
 		cv::Mat & emptyCells,
 		cv::Point3f & viewPoint) const
 {
-	UDEBUG("scan format=%d, occupancyFromDepth_=%d normalsSegmentation_=%d grid3D_=%d",
-			node.sensorData().laserScanRaw().isEmpty()?0:node.sensorData().laserScanRaw().format(), occupancyFromDepth_?1:0, normalsSegmentation_?1:0, grid3D_?1:0);
+	UDEBUG("scan format=%s, occupancyFromDepth_=%d normalsSegmentation_=%d grid3D_=%d",
+			node.sensorData().laserScanRaw().isEmpty()?"NA":node.sensorData().laserScanRaw().formatName().c_str(), occupancyFromDepth_?1:0, normalsSegmentation_?1:0, grid3D_?1:0);
 
 	if((node.sensorData().laserScanRaw().is2d()) && !occupancyFromDepth_)
 	{
@@ -354,7 +354,7 @@ void OccupancyGrid::createLocalMap(
 			}
 			else
 			{
-				UWARN("Cannot create local map, scan is empty (node=%d).", node.id());
+				UWARN("Cannot create local map, scan is empty (node=%d, %s=false).", node.id(), Parameters::kGridFromDepth().c_str());
 			}
 		}
 		else
@@ -407,7 +407,7 @@ void OccupancyGrid::createLocalMap(
 				const Transform & t = node.sensorData().stereoCameraModel().localTransform();
 				viewPoint = cv::Point3f(t.x(), t.y(), t.z());
 			}
-			createLocalMap(LaserScan(util3d::laserScanFromPointCloud(*cloud, indices), 0, 0.0f, LaserScan::kXYZRGB), node.getPose(), groundCells, obstacleCells, emptyCells, viewPoint);
+			createLocalMap(LaserScan(util3d::laserScanFromPointCloud(*cloud, indices), 0, 0.0f), node.getPose(), groundCells, obstacleCells, emptyCells, viewPoint);
 		}
 	}
 }
@@ -445,8 +445,8 @@ void OccupancyGrid::createLocalMap(
 			UDEBUG("groundIndices=%d, obstaclesIndices=%d", (int)groundIndices->size(), (int)obstaclesIndices->size());
 			if(grid3D_)
 			{
-				groundCloud = util3d::laserScanFromPointCloud(*cloudSegmented, groundIndices);
-				obstaclesCloud = util3d::laserScanFromPointCloud(*cloudSegmented, obstaclesIndices);
+				groundCloud = util3d::laserScanFromPointCloud(*cloudSegmented, groundIndices).data();
+				obstaclesCloud = util3d::laserScanFromPointCloud(*cloudSegmented, obstaclesIndices).data();
 			}
 			else
 			{
@@ -460,8 +460,8 @@ void OccupancyGrid::createLocalMap(
 			UDEBUG("groundIndices=%d, obstaclesIndices=%d", (int)groundIndices->size(), (int)obstaclesIndices->size());
 			if(grid3D_)
 			{
-				groundCloud = util3d::laserScanFromPointCloud(*cloudSegmented, groundIndices);
-				obstaclesCloud = util3d::laserScanFromPointCloud(*cloudSegmented, obstaclesIndices);
+				groundCloud = util3d::laserScanFromPointCloud(*cloudSegmented, groundIndices).data();
+				obstaclesCloud = util3d::laserScanFromPointCloud(*cloudSegmented, obstaclesIndices).data();
 			}
 			else
 			{
@@ -475,8 +475,8 @@ void OccupancyGrid::createLocalMap(
 			UDEBUG("groundIndices=%d, obstaclesIndices=%d", (int)groundIndices->size(), (int)obstaclesIndices->size());
 			if(grid3D_)
 			{
-				groundCloud = util3d::laserScanFromPointCloud(*cloudSegmented, groundIndices);
-				obstaclesCloud = util3d::laserScanFromPointCloud(*cloudSegmented, obstaclesIndices);
+				groundCloud = util3d::laserScanFromPointCloud(*cloudSegmented, groundIndices).data();
+				obstaclesCloud = util3d::laserScanFromPointCloud(*cloudSegmented, obstaclesIndices).data();
 			}
 			else
 			{
@@ -490,8 +490,8 @@ void OccupancyGrid::createLocalMap(
 			UDEBUG("groundIndices=%d, obstaclesIndices=%d", (int)groundIndices->size(), (int)obstaclesIndices->size());
 			if(grid3D_)
 			{
-				groundCloud = util3d::laserScanFromPointCloud(*cloudSegmented, groundIndices);
-				obstaclesCloud = util3d::laserScanFromPointCloud(*cloudSegmented, obstaclesIndices);
+				groundCloud = util3d::laserScanFromPointCloud(*cloudSegmented, groundIndices).data();
+				obstaclesCloud = util3d::laserScanFromPointCloud(*cloudSegmented, obstaclesIndices).data();
 			}
 			else
 			{
@@ -543,17 +543,17 @@ void OccupancyGrid::createLocalMap(
 					UDEBUG("ground=%d obstacles=%d empty=%d", (int)groundIndices->size(), (int)obstaclesIndices->size(), (int)emptyIndices->size());
 					if(scan.hasRGB())
 					{
-						groundCells = util3d::laserScanFromPointCloud(*cloudWithRayTracing, groundIndices, tinv);
-						obstacleCells = util3d::laserScanFromPointCloud(*cloudWithRayTracing, obstaclesIndices, tinv);
-						emptyCells = util3d::laserScanFromPointCloud(*cloudWithRayTracing, emptyIndices, tinv);
+						groundCells = util3d::laserScanFromPointCloud(*cloudWithRayTracing, groundIndices, tinv).data();
+						obstacleCells = util3d::laserScanFromPointCloud(*cloudWithRayTracing, obstaclesIndices, tinv).data();
+						emptyCells = util3d::laserScanFromPointCloud(*cloudWithRayTracing, emptyIndices, tinv).data();
 					}
 					else
 					{
 						pcl::PointCloud<pcl::PointXYZ>::Ptr cloudWithRayTracing2(new pcl::PointCloud<pcl::PointXYZ>);
 						pcl::copyPointCloud(*cloudWithRayTracing, *cloudWithRayTracing2);
-						groundCells = util3d::laserScanFromPointCloud(*cloudWithRayTracing2, groundIndices, tinv);
-						obstacleCells = util3d::laserScanFromPointCloud(*cloudWithRayTracing2, obstaclesIndices, tinv);
-						emptyCells = util3d::laserScanFromPointCloud(*cloudWithRayTracing2, emptyIndices, tinv);
+						groundCells = util3d::laserScanFromPointCloud(*cloudWithRayTracing2, groundIndices, tinv).data();
+						obstacleCells = util3d::laserScanFromPointCloud(*cloudWithRayTracing2, obstaclesIndices, tinv).data();
+						emptyCells = util3d::laserScanFromPointCloud(*cloudWithRayTracing2, emptyIndices, tinv).data();
 					}
 				}
 			}
@@ -668,6 +668,10 @@ cv::Mat OccupancyGrid::getProbMap(float & xMin, float & yMin) const
 				}
 			}
 		}
+	}
+	else
+	{
+		UWARN("Map info is empty, cannot generate probabilistic occupancy grid");
 	}
 	return map;
 }
@@ -1244,6 +1248,7 @@ bool OccupancyGrid::update(const std::map<int, Transform> & posesIn)
 							ptBegin.y = 0;
 						if(ptEnd.y >= map.rows)
 							ptEnd.y = map.rows-1;
+
 						for(int i=ptBegin.x; i<ptEnd.x; ++i)
 						{
 							for(int j=ptBegin.y; j<ptEnd.y; ++j)
@@ -1282,6 +1287,7 @@ bool OccupancyGrid::update(const std::map<int, Transform> & posesIn)
 									info[0] = (float)kter->first;
 									info[1] = float(i) * cellSize_ + xMin;
 									info[2] = float(j) * cellSize_ + yMin;
+									info[3] = probClampingMin_;
 									cter->second.first+=1;
 								}
 								value = -2; // free space (footprint)

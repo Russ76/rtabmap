@@ -25,42 +25,48 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef OBJDELETIONHANDLER_H_
-#define OBJDELETIONHANDLER_H_
+#ifndef ODOMETRYORBSLAM_H_
+#define ODOMETRYORBSLAM_H_
 
-#include "rtabmap/utilite/UEventsHandler.h"
-#include "rtabmap/utilite/UEvent.h"
-#include <QtCore/QObject>
+#include <rtabmap/core/Odometry.h>
 
-class ObjDeletionHandler : public QObject, public UEventsHandler
+#if RTABMAP_ORB_SLAM == 3
+namespace ORB_SLAM3 {
+#else
+namespace ORB_SLAM2 {
+#endif
+class System;
+}
+
+class ORBSLAMSystem;
+
+namespace rtabmap {
+
+class RTABMAP_EXP OdometryORBSLAM : public Odometry
 {
-	Q_OBJECT
-
 public:
-	ObjDeletionHandler(int watchedId, QObject * receiver = 0, const char * member = 0) : _watchedId(watchedId)
-	{
-		if(receiver && member)
-		{
-			connect(this, SIGNAL(objDeletionEventReceived(int)), receiver, member);
-		}
-	}
-	virtual ~ObjDeletionHandler() {}
+	OdometryORBSLAM(const rtabmap::ParametersMap & parameters = rtabmap::ParametersMap());
+	virtual ~OdometryORBSLAM();
 
-Q_SIGNALS:
-	void objDeletionEventReceived(int);
+	virtual void reset(const Transform & initialPose = Transform::getIdentity());
+	virtual Odometry::Type getType() {return Odometry::kTypeORBSLAM;}
+	virtual bool canProcessAsyncIMU() const;
 
-protected:
-	virtual bool handleEvent(UEvent * event)
-	{
-		if(event->getClassName().compare("UObjDeletedEvent") == 0 &&
-		   event->getCode() == _watchedId)
-		{
-			Q_EMIT objDeletionEventReceived(_watchedId);
-		}
-		return false;
-	}
 private:
-	int _watchedId;
+	virtual Transform computeTransform(SensorData & image, const Transform & guess = Transform(), OdometryInfo * info = 0);
+
+private:
+#ifdef RTABMAP_ORB_SLAM
+	ORBSLAMSystem * orbslam_;
+	bool firstFrame_;
+	Transform originLocalTransform_;
+	Transform previousPose_;
+	bool useIMU_;
+	Transform imuLocalTransform_;
+#endif
+
 };
 
-#endif /* OBJDELETIONHANDLER_H_ */
+}
+
+#endif /* ODOMETRYORBSLAM_H_ */

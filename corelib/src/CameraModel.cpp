@@ -37,8 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace rtabmap {
 
-CameraModel::CameraModel() :
-	localTransform_(0,0,1,0, -1,0,0,0, 0,-1,0,0)
+CameraModel::CameraModel()
 {
 
 }
@@ -234,7 +233,7 @@ bool CameraModel::load(const std::string & filePath)
 			n = fs["camera_name"];
 			if(n.type() != cv::FileNode::NONE)
 			{
-				name_ = (int)n;
+				name_ = (std::string)n;
 			}
 			else
 			{
@@ -367,7 +366,11 @@ bool CameraModel::load(const std::string & directory, const std::string & camera
 
 bool CameraModel::save(const std::string & directory) const
 {
-	std::string filePath = directory+"/"+name_+".yaml";
+	if(name_.empty())
+	{
+		UWARN("Camera name is empty, will use general \"camera\" as name.");
+	}
+	std::string filePath = directory+"/"+(name_.empty()?"camera":name_)+".yaml";
 	if(!filePath.empty() && (!K_.empty() || !D_.empty() || !R_.empty() || !P_.empty()))
 	{
 		UINFO("Saving calibration to file \"%s\"", filePath.c_str());
@@ -767,7 +770,7 @@ bool CameraModel::inFrame(int u, int v) const
 
 std::ostream& operator<<(std::ostream& os, const CameraModel& model)
 {
-	os << "Name: " << model.name() << std::endl
+	os << "Name: " << model.name().c_str() << std::endl
 	   << "Size: " << model.imageWidth() << "x" << model.imageHeight() << std::endl
 	   << "K= " << model.K_raw() << std::endl
 	   << "D= " << model.D_raw() << std::endl

@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pcl/pcl_config.h>
 
 #ifdef RTABMAP_REALSENSE2
+#include <librealsense2/rs.hpp>
 #include <librealsense2/hpp/rs_frame.hpp>
 #endif
 
@@ -75,6 +76,7 @@ public:
 	void setEmitterEnabled(bool enabled);
 	void setIRFormat(bool enabled, bool useDepthInsteadOfRightImage);
 	void setResolution(int width, int height, int fps = 30);
+	void setDepthResolution(int width, int height, int fps = 30);
 	void setGlobalTimeSync(bool enabled);
 	void publishInterIMU(bool enabled);
 	void setDualMode(bool enabled, const Transform & extrinsics);
@@ -85,6 +87,7 @@ public:
 
 #ifdef RTABMAP_REALSENSE2
 private:
+	void close();
 	void imu_callback(rs2::frame frame);
 	void pose_callback(rs2::frame frame);
 	void frame_callback(rs2::frame frame);
@@ -102,14 +105,14 @@ protected:
 
 private:
 #ifdef RTABMAP_REALSENSE2
-	rs2::context * ctx_;
-	std::vector<rs2::device *> dev_;
+	rs2::context ctx_;
+	std::vector<rs2::device> dev_;
 	std::string deviceId_;
-	rs2::syncer * syncer_;
+	rs2::syncer syncer_;
 	float depth_scale_meters_;
-	rs2_intrinsics * depthIntrinsics_;
-	rs2_intrinsics * rgbIntrinsics_;
-	rs2_extrinsics * depthToRGBExtrinsics_;
+	rs2_intrinsics depthIntrinsics_;
+	rs2_intrinsics rgbIntrinsics_;
+	rs2_extrinsics depthToRGBExtrinsics_;
 	cv::Mat depthBuffer_;
 	cv::Mat rgbBuffer_;
 	CameraModel model_;
@@ -132,13 +135,15 @@ private:
 	int cameraWidth_;
 	int cameraHeight_;
 	int cameraFps_;
+	int cameraDepthWidth_;
+	int cameraDepthHeight_;
+	int cameraDepthFps_;
 	bool globalTimeSync_;
 	bool publishInterIMU_;
 	bool dualMode_;
 	Transform dualExtrinsics_;
 	std::string jsonConfig_;
 	bool closing_;
-	bool isL500_;
 
 	static Transform realsense2PoseRotation_;
 	static Transform realsense2PoseRotationInv_;

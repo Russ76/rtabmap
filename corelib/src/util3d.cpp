@@ -38,6 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pcl/io/pcd_io.h>
 #include <pcl/io/ply_io.h>
 #include <pcl/common/transforms.h>
+#include <pcl/common/common.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/imgproc/types_c.h>
 
@@ -1544,11 +1545,11 @@ LaserScan laserScanFromPointCloud(const pcl::PCLPointCloud2 & cloud, bool filter
 	return  LaserScan(laserScan(cv::Range::all(), cv::Range(0,oi)), 0, 0, format);
 }
 
-cv::Mat laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZ> & cloud, const Transform & transform, bool filterNaNs)
+LaserScan laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZ> & cloud, const Transform & transform, bool filterNaNs)
 {
 	return laserScanFromPointCloud(cloud, pcl::IndicesPtr(), transform, filterNaNs);
 }
-cv::Mat laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZ> & cloud, const pcl::IndicesPtr & indices, const Transform & transform, bool filterNaNs)
+LaserScan laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZ> & cloud, const pcl::IndicesPtr & indices, const Transform & transform, bool filterNaNs)
 {
 	cv::Mat laserScan;
 	bool nullTransform = transform.isNull() || transform.isIdentity();
@@ -1605,16 +1606,16 @@ cv::Mat laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZ> & cloud, co
 	}
 	if(oi == 0)
 	{
-		return cv::Mat();
+		return LaserScan();
 	}
-	return laserScan(cv::Range::all(), cv::Range(0,oi));
+	return LaserScan(laserScan(cv::Range::all(), cv::Range(0,oi)), 0, 0.0f, LaserScan::kXYZ);
 }
 
-cv::Mat laserScanFromPointCloud(const pcl::PointCloud<pcl::PointNormal> & cloud, const Transform & transform, bool filterNaNs)
+LaserScan laserScanFromPointCloud(const pcl::PointCloud<pcl::PointNormal> & cloud, const Transform & transform, bool filterNaNs)
 {
 	return laserScanFromPointCloud(cloud, pcl::IndicesPtr(), transform, filterNaNs);
 }
-cv::Mat laserScanFromPointCloud(const pcl::PointCloud<pcl::PointNormal> & cloud, const pcl::IndicesPtr & indices, const Transform & transform, bool filterNaNs)
+LaserScan laserScanFromPointCloud(const pcl::PointCloud<pcl::PointNormal> & cloud, const pcl::IndicesPtr & indices, const Transform & transform, bool filterNaNs)
 {
 	cv::Mat laserScan;
 	bool nullTransform = transform.isNull() || transform.isIdentity();
@@ -1688,12 +1689,12 @@ cv::Mat laserScanFromPointCloud(const pcl::PointCloud<pcl::PointNormal> & cloud,
 	}
 	if(oi == 0)
 	{
-		return cv::Mat();
+		return LaserScan();
 	}
-	return laserScan(cv::Range::all(), cv::Range(0,oi));
+	return LaserScan(laserScan(cv::Range::all(), cv::Range(0,oi)), 0, 0.0f, LaserScan::kXYZNormal);
 }
 
-cv::Mat laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZ> & cloud, const pcl::PointCloud<pcl::Normal> & normals, const Transform & transform, bool filterNaNs)
+LaserScan laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZ> & cloud, const pcl::PointCloud<pcl::Normal> & normals, const Transform & transform, bool filterNaNs)
 {
 	UASSERT(cloud.size() == normals.size());
 	cv::Mat laserScan = cv::Mat(1, (int)cloud.size(), CV_32FC(6));
@@ -1734,17 +1735,17 @@ cv::Mat laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZ> & cloud, co
 	}
 	if(oi == 0)
 	{
-		return cv::Mat();
+		return LaserScan();
 	}
-	return laserScan(cv::Range::all(), cv::Range(0,oi));
+	return LaserScan(laserScan(cv::Range::all(), cv::Range(0,oi)), 0, 0.0f, LaserScan::kXYZNormal);
 }
 
-cv::Mat laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZRGB> & cloud, const Transform & transform, bool filterNaNs)
+LaserScan laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZRGB> & cloud, const Transform & transform, bool filterNaNs)
 {
 	return laserScanFromPointCloud(cloud, pcl::IndicesPtr(), transform, filterNaNs);
 }
 
-cv::Mat laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZRGB> & cloud, const pcl::IndicesPtr & indices, const Transform & transform, bool filterNaNs)
+LaserScan laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZRGB> & cloud, const pcl::IndicesPtr & indices, const Transform & transform, bool filterNaNs)
 {
 	cv::Mat laserScan;
 	bool nullTransform = transform.isNull() || transform.isIdentity();
@@ -1805,17 +1806,17 @@ cv::Mat laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZRGB> & cloud,
 	}
 	if(oi == 0)
 	{
-		return cv::Mat();
+		return LaserScan();
 	}
-	return laserScan(cv::Range::all(), cv::Range(0,oi));
+	return LaserScan(laserScan(cv::Range::all(), cv::Range(0,oi)), 0, 0.0f, LaserScan::kXYZRGB);
 }
 
-cv::Mat laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZI> & cloud, const Transform & transform, bool filterNaNs)
+LaserScan laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZI> & cloud, const Transform & transform, bool filterNaNs)
 {
 	return laserScanFromPointCloud(cloud, pcl::IndicesPtr(), transform, filterNaNs);
 }
 
-cv::Mat laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZI> & cloud, const pcl::IndicesPtr & indices, const Transform & transform, bool filterNaNs)
+LaserScan laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZI> & cloud, const pcl::IndicesPtr & indices, const Transform & transform, bool filterNaNs)
 {
 	cv::Mat laserScan;
 	bool nullTransform = transform.isNull() || transform.isIdentity();
@@ -1874,12 +1875,12 @@ cv::Mat laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZI> & cloud, c
 	}
 	if(oi == 0)
 	{
-		return cv::Mat();
+		return LaserScan();
 	}
-	return laserScan(cv::Range::all(), cv::Range(0,oi));
+	return LaserScan(laserScan(cv::Range::all(), cv::Range(0,oi)), 0, 0.0f, LaserScan::kXYZI);
 }
 
-cv::Mat laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZRGB> & cloud, const pcl::PointCloud<pcl::Normal> & normals, const Transform & transform, bool filterNaNs)
+LaserScan laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZRGB> & cloud, const pcl::PointCloud<pcl::Normal> & normals, const Transform & transform, bool filterNaNs)
 {
 	UASSERT(cloud.size() == normals.size());
 	cv::Mat laserScan(1, (int)cloud.size(), CV_32FC(7));
@@ -1922,16 +1923,16 @@ cv::Mat laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZRGB> & cloud,
 	}
 	if(oi == 0)
 	{
-		return cv::Mat();
+		return LaserScan();
 	}
-	return laserScan(cv::Range::all(), cv::Range(0,oi));
+	return LaserScan(laserScan(cv::Range::all(), cv::Range(0,oi)), 0, 0.0f, LaserScan::kXYZRGBNormal);
 }
 
-cv::Mat laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZRGBNormal> & cloud, const Transform & transform, bool filterNaNs)
+LaserScan laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZRGBNormal> & cloud, const Transform & transform, bool filterNaNs)
 {
 	return laserScanFromPointCloud(cloud, pcl::IndicesPtr(), transform, filterNaNs);
 }
-cv::Mat laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZRGBNormal> & cloud, const pcl::IndicesPtr & indices, const Transform & transform, bool filterNaNs)
+LaserScan laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZRGBNormal> & cloud, const pcl::IndicesPtr & indices, const Transform & transform, bool filterNaNs)
 {
 	cv::Mat laserScan;
 	bool nullTransform = transform.isNull() || transform.isIdentity();
@@ -2009,12 +2010,12 @@ cv::Mat laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZRGBNormal> & 
 	}
 	if(oi == 0)
 	{
-		return cv::Mat();
+		return LaserScan();
 	}
-	return laserScan(cv::Range::all(), cv::Range(0,oi));
+	return LaserScan(laserScan(cv::Range::all(), cv::Range(0,oi)), 0, 0.0f, LaserScan::kXYZRGBNormal);
 }
 
-cv::Mat laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZI> & cloud, const pcl::PointCloud<pcl::Normal> & normals, const Transform & transform, bool filterNaNs)
+LaserScan laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZI> & cloud, const pcl::PointCloud<pcl::Normal> & normals, const Transform & transform, bool filterNaNs)
 {
 	UASSERT(cloud.size() == normals.size());
 	cv::Mat laserScan(1, (int)cloud.size(), CV_32FC(7));
@@ -2056,53 +2057,97 @@ cv::Mat laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZI> & cloud, c
 	}
 	if(oi == 0)
 	{
-		return cv::Mat();
+		return LaserScan();
 	}
-	return laserScan(cv::Range::all(), cv::Range(0,oi));
+	return LaserScan(laserScan(cv::Range::all(), cv::Range(0,oi)), 0, 0.0f, LaserScan::kXYZINormal);
 }
-cv::Mat laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZINormal> & cloud, const Transform & transform, bool filterNaNs)
+
+LaserScan laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZINormal> & cloud, const Transform & transform, bool filterNaNs)
 {
-	cv::Mat laserScan(1, (int)cloud.size(), CV_32FC(7));
+	return laserScanFromPointCloud(cloud, pcl::IndicesPtr(), transform, filterNaNs);
+}
+LaserScan laserScanFromPointCloud(const pcl::PointCloud<pcl::PointXYZINormal> & cloud, const pcl::IndicesPtr & indices, const Transform & transform, bool filterNaNs)
+{
+	cv::Mat laserScan;
 	bool nullTransform = transform.isNull() || transform.isIdentity();
 	int oi = 0;
-	for(unsigned int i=0; i<cloud.size(); ++i)
+	if(indices.get())
 	{
-		if(!filterNaNs || (pcl::isFinite(cloud.at(i)) &&
-				uIsFinite(cloud.at(i).normal_x) &&
-				uIsFinite(cloud.at(i).normal_y) &&
-				uIsFinite(cloud.at(i).normal_z)))
+		laserScan = cv::Mat(1, (int)indices->size(), CV_32FC(7));
+		for(unsigned int i=0; i<indices->size(); ++i)
 		{
-			float * ptr = laserScan.ptr<float>(0, oi++);
-			if(!nullTransform)
+			int index = indices->at(i);
+			if(!filterNaNs || (pcl::isFinite(cloud.at(index)) &&
+					uIsFinite(cloud.at(index).normal_x) &&
+					uIsFinite(cloud.at(index).normal_y) &&
+					uIsFinite(cloud.at(index).normal_z)))
 			{
-				pcl::PointXYZINormal pt = util3d::transformPoint(cloud.at(i), transform);
-				ptr[0] = pt.x;
-				ptr[1] = pt.y;
-				ptr[2] = pt.z;
-				ptr[4] = pt.normal_x;
-				ptr[5] = pt.normal_y;
-				ptr[6] = pt.normal_z;
+				float * ptr = laserScan.ptr<float>(0, oi++);
+				if(!nullTransform)
+				{
+					pcl::PointXYZINormal pt = util3d::transformPoint(cloud.at(index), transform);
+					ptr[0] = pt.x;
+					ptr[1] = pt.y;
+					ptr[2] = pt.z;
+					ptr[4] = pt.normal_x;
+					ptr[5] = pt.normal_y;
+					ptr[6] = pt.normal_z;
+				}
+				else
+				{
+					ptr[0] = cloud.at(index).x;
+					ptr[1] = cloud.at(index).y;
+					ptr[2] = cloud.at(index).z;
+					ptr[4] = cloud.at(index).normal_x;
+					ptr[5] = cloud.at(index).normal_y;
+					ptr[6] = cloud.at(index).normal_z;
+				}
+				ptr[3] = cloud.at(i).intensity;
 			}
-			else
+		}
+	}
+	else
+	{
+		laserScan = cv::Mat(1, (int)cloud.size(), CV_32FC(7));
+		for(unsigned int i=0; i<cloud.size(); ++i)
+		{
+			if(!filterNaNs || (pcl::isFinite(cloud.at(i)) &&
+					uIsFinite(cloud.at(i).normal_x) &&
+					uIsFinite(cloud.at(i).normal_y) &&
+					uIsFinite(cloud.at(i).normal_z)))
 			{
-				ptr[0] = cloud.at(i).x;
-				ptr[1] = cloud.at(i).y;
-				ptr[2] = cloud.at(i).z;
-				ptr[4] = cloud.at(i).normal_x;
-				ptr[5] = cloud.at(i).normal_y;
-				ptr[6] = cloud.at(i).normal_z;
+				float * ptr = laserScan.ptr<float>(0, oi++);
+				if(!nullTransform)
+				{
+					pcl::PointXYZINormal pt = util3d::transformPoint(cloud.at(i), transform);
+					ptr[0] = pt.x;
+					ptr[1] = pt.y;
+					ptr[2] = pt.z;
+					ptr[4] = pt.normal_x;
+					ptr[5] = pt.normal_y;
+					ptr[6] = pt.normal_z;
+				}
+				else
+				{
+					ptr[0] = cloud.at(i).x;
+					ptr[1] = cloud.at(i).y;
+					ptr[2] = cloud.at(i).z;
+					ptr[4] = cloud.at(i).normal_x;
+					ptr[5] = cloud.at(i).normal_y;
+					ptr[6] = cloud.at(i).normal_z;
+				}
+				ptr[3] = cloud.at(i).intensity;
 			}
-			ptr[3] = cloud.at(i).intensity;
 		}
 	}
 	if(oi == 0)
 	{
-		return cv::Mat();
+		return LaserScan();
 	}
-	return laserScan(cv::Range::all(), cv::Range(0,oi));
+	return LaserScan(laserScan(cv::Range::all(), cv::Range(0,oi)), 0, 0.0f, LaserScan::kXYZINormal);
 }
 
-cv::Mat laserScan2dFromPointCloud(const pcl::PointCloud<pcl::PointXYZ> & cloud, const Transform & transform, bool filterNaNs)
+LaserScan laserScan2dFromPointCloud(const pcl::PointCloud<pcl::PointXYZ> & cloud, const Transform & transform, bool filterNaNs)
 {
 	cv::Mat laserScan(1, (int)cloud.size(), CV_32FC2);
 	bool nullTransform = transform.isNull();
@@ -2129,12 +2174,12 @@ cv::Mat laserScan2dFromPointCloud(const pcl::PointCloud<pcl::PointXYZ> & cloud, 
 	}
 	if(oi == 0)
 	{
-		return cv::Mat();
+		return LaserScan();
 	}
-	return laserScan(cv::Range::all(), cv::Range(0,oi));
+	return LaserScan(laserScan(cv::Range::all(), cv::Range(0,oi)), 0, 0.0f, LaserScan::kXY);
 }
 
-cv::Mat laserScan2dFromPointCloud(const pcl::PointCloud<pcl::PointXYZI> & cloud, const Transform & transform, bool filterNaNs)
+LaserScan laserScan2dFromPointCloud(const pcl::PointCloud<pcl::PointXYZI> & cloud, const Transform & transform, bool filterNaNs)
 {
 	cv::Mat laserScan(1, (int)cloud.size(), CV_32FC3);
 	bool nullTransform = transform.isNull();
@@ -2163,12 +2208,12 @@ cv::Mat laserScan2dFromPointCloud(const pcl::PointCloud<pcl::PointXYZI> & cloud,
 	}
 	if(oi == 0)
 	{
-		return cv::Mat();
+		return LaserScan();
 	}
-	return laserScan(cv::Range::all(), cv::Range(0,oi));
+	return LaserScan(laserScan(cv::Range::all(), cv::Range(0,oi)), 0, 0.0f, LaserScan::kXYI);
 }
 
-cv::Mat laserScan2dFromPointCloud(const pcl::PointCloud<pcl::PointNormal> & cloud, const Transform & transform, bool filterNaNs)
+LaserScan laserScan2dFromPointCloud(const pcl::PointCloud<pcl::PointNormal> & cloud, const Transform & transform, bool filterNaNs)
 {
 	cv::Mat laserScan(1, (int)cloud.size(), CV_32FC(5));
 	bool nullTransform = transform.isNull();
@@ -2203,12 +2248,12 @@ cv::Mat laserScan2dFromPointCloud(const pcl::PointCloud<pcl::PointNormal> & clou
 	}
 	if(oi == 0)
 	{
-		return cv::Mat();
+		return LaserScan();
 	}
-	return laserScan(cv::Range::all(), cv::Range(0,oi));
+	return LaserScan(laserScan(cv::Range::all(), cv::Range(0,oi)), 0, 0.0f, LaserScan::kXYNormal);
 }
 
-cv::Mat laserScan2dFromPointCloud(const pcl::PointCloud<pcl::PointXYZ> & cloud, const pcl::PointCloud<pcl::Normal> & normals, const Transform & transform, bool filterNaNs)
+LaserScan laserScan2dFromPointCloud(const pcl::PointCloud<pcl::PointXYZ> & cloud, const pcl::PointCloud<pcl::Normal> & normals, const Transform & transform, bool filterNaNs)
 {
 	UASSERT(cloud.size() == normals.size());
 	cv::Mat laserScan(1, (int)cloud.size(), CV_32FC(5));
@@ -2247,12 +2292,12 @@ cv::Mat laserScan2dFromPointCloud(const pcl::PointCloud<pcl::PointXYZ> & cloud, 
 	}
 	if(oi == 0)
 	{
-		return cv::Mat();
+		return LaserScan();
 	}
-	return laserScan(cv::Range::all(), cv::Range(0,oi));
+	return LaserScan(laserScan(cv::Range::all(), cv::Range(0,oi)), 0, 0.0f, LaserScan::kXYNormal);
 }
 
-cv::Mat laserScan2dFromPointCloud(const pcl::PointCloud<pcl::PointXYZINormal> & cloud, const Transform & transform, bool filterNaNs)
+LaserScan laserScan2dFromPointCloud(const pcl::PointCloud<pcl::PointXYZINormal> & cloud, const Transform & transform, bool filterNaNs)
 {
 	cv::Mat laserScan(1, (int)cloud.size(), CV_32FC(6));
 	bool nullTransform = transform.isNull();
@@ -2289,12 +2334,12 @@ cv::Mat laserScan2dFromPointCloud(const pcl::PointCloud<pcl::PointXYZINormal> & 
 	}
 	if(oi == 0)
 	{
-		return cv::Mat();
+		return LaserScan();
 	}
-	return laserScan(cv::Range::all(), cv::Range(0,oi));
+	return LaserScan(laserScan(cv::Range::all(), cv::Range(0,oi)), 0, 0.0f, LaserScan::kXYINormal);
 }
 
-cv::Mat laserScan2dFromPointCloud(const pcl::PointCloud<pcl::PointXYZI> & cloud, const pcl::PointCloud<pcl::Normal> & normals, const Transform & transform, bool filterNaNs)
+LaserScan laserScan2dFromPointCloud(const pcl::PointCloud<pcl::PointXYZI> & cloud, const pcl::PointCloud<pcl::Normal> & normals, const Transform & transform, bool filterNaNs)
 {
 	UASSERT(cloud.size() == normals.size());
 	cv::Mat laserScan(1, (int)cloud.size(), CV_32FC(6));
@@ -2335,9 +2380,9 @@ cv::Mat laserScan2dFromPointCloud(const pcl::PointCloud<pcl::PointXYZI> & cloud,
 	}
 	if(oi == 0)
 	{
-		return cv::Mat();
+		return LaserScan();
 	}
-	return laserScan(cv::Range::all(), cv::Range(0,oi));
+	return LaserScan(laserScan(cv::Range::all(), cv::Range(0,oi)), 0, 0.0f, LaserScan::kXYINormal);
 }
 
 pcl::PCLPointCloud2::Ptr laserScanToPointCloud2(const LaserScan & laserScan, const Transform & transform)
@@ -2971,52 +3016,6 @@ cv::Mat projectCloudToCamera(
 	{
 		UERROR("field map pcl::pointXYZ not found!");
 	}
-/*
-	int count = 0;
-	for(int i=0; i<(int)laserScan->size(); ++i)
-	{
-		// Get 3D from laser scan
-		pcl::PointXYZ ptScan = laserScan->at(i);
-		ptScan = util3d::transformPoint(ptScan, t);
-
-		// re-project in camera frame
-		float z = ptScan.z;
-		bool set = false;
-		if(z > 0.0f)
-		{
-			float invZ = 1.0f/z;
-			float dx = (fx*ptScan.x)*invZ + cx;
-			float dy = (fy*ptScan.y)*invZ + cy;
-			int dx_low = dx;
-			int dy_low = dy;
-			int dx_high = dx + 0.5f;
-			int dy_high = dy + 0.5f;
-			if(uIsInBounds(dx_low, 0, registered.cols) && uIsInBounds(dy_low, 0, registered.rows))
-			{
-				set = true;
-				float &zReg = registered.at<float>(dy_low, dx_low);
-				if(zReg == 0 || z < zReg)
-				{
-					zReg = z;
-				}
-			}
-			if((dx_low != dx_high || dy_low != dy_high) &&
-				uIsInBounds(dx_high, 0, registered.cols) && uIsInBounds(dy_high, 0, registered.rows))
-			{
-				set = true;
-				float &zReg = registered.at<float>(dy_high, dx_high);
-				if(zReg == 0 || z < zReg)
-				{
-					zReg = z;
-				}
-			}
-		}
-		if(set)
-		{
-			count++;
-		}
-	}
-	*/
 	UDEBUG("Points in camera=%d/%d", count, (int)laserScan->data.size());
 
 	return registered;
@@ -3103,6 +3102,274 @@ void fillProjectedCloudHoles(cv::Mat & registeredDepth, bool verticalDirection, 
 			}
 		}
 	}
+}
+
+struct ProjectionInfo {
+	int nodeID;
+	int cameraIndex;
+	pcl::PointXY uv;
+	float distance;
+};
+
+/**
+ * For each point, return pixel of the best camera (NodeID->CameraIndex)
+ * looking at it based on the policy and parameters
+ */
+template<class PointT>
+std::vector<std::pair< std::pair<int, int>, pcl::PointXY> > projectCloudToCamerasImpl (
+		const typename pcl::PointCloud<PointT> & cloud,
+		const std::map<int, Transform> & cameraPoses,
+		const std::map<int, std::vector<CameraModel> > & cameraModels,
+		float maxDistance,
+		float maxAngle,
+		const std::vector<float> & roiRatios,
+		bool distanceToCamPolicy,
+		const ProgressState * state)
+{
+	std::vector<std::pair< std::pair<int, int>, pcl::PointXY> > pointToPixel;
+
+	if (cloud.empty() || cameraPoses.empty() || cameraModels.empty())
+		return pointToPixel;
+
+	std::string msg = uFormat("Computing visible points per cam (%d points, %d cams)", (int)cloud.size(), (int)cameraPoses.size());
+	UINFO(msg.c_str());
+	if(state && !state->callback(msg))
+	{
+		//cancelled!
+		UWARN("Projecting to cameras cancelled!");
+		return pointToPixel;
+	}
+
+	std::vector<std::vector<ProjectionInfo> > invertedIndex(cloud.size()); // For each point: list of cameras
+	int cameraProcessed = 0;
+	for(std::map<int, Transform>::const_iterator pter = cameraPoses.lower_bound(0); pter!=cameraPoses.end(); ++pter)
+	{
+		std::map<int, std::vector<CameraModel> >::const_iterator iter=cameraModels.begin();
+		if(iter!=cameraModels.end() && !iter->second.empty())
+		{
+			for(size_t i=0; i<iter->second.size(); ++i)
+			{
+				Transform cameraTransform = (pter->second * iter->second[i].localTransform());
+				UASSERT(!cameraTransform.isNull());
+				cv::Mat cameraMatrixK = iter->second[i].K();
+				UASSERT(cameraMatrixK.type() == CV_64FC1 && cameraMatrixK.cols == 3 && cameraMatrixK.cols == 3);
+				const cv::Size & imageSize = iter->second[i].imageSize();
+
+				float fx = cameraMatrixK.at<double>(0,0);
+				float fy = cameraMatrixK.at<double>(1,1);
+				float cx = cameraMatrixK.at<double>(0,2);
+				float cy = cameraMatrixK.at<double>(1,2);
+
+				// depth: 2 channels UINT: [depthMM, indexPt]
+				cv::Mat registered = cv::Mat::zeros(imageSize, CV_32SC2);
+				Transform t = cameraTransform.inverse();
+
+				cv::Rect roi(0,0,imageSize.width, imageSize.height);
+				if(roiRatios.size()==4)
+				{
+					roi = util2d::computeRoi(imageSize, roiRatios);
+				}
+
+				int count = 0;
+				for(size_t i=0; i<cloud.size(); ++i)
+				{
+					// Get 3D from laser scan
+					PointT ptScan = cloud.at(i);
+					ptScan = util3d::transformPoint(ptScan, t);
+
+					// re-project in camera frame
+					float z = ptScan.z;
+					bool set = false;
+					if(z > 0.0f)
+					{
+						float invZ = 1.0f/z;
+						float dx = (fx*ptScan.x)*invZ + cx;
+						float dy = (fy*ptScan.y)*invZ + cy;
+						int dx_low = dx;
+						int dy_low = dy;
+						int dx_high = dx + 0.5f;
+						int dy_high = dy + 0.5f;
+						int zMM = z * 1000;
+						if(uIsInBounds(dx_low, roi.x, roi.x+roi.width) && uIsInBounds(dy_low, roi.y, roi.y+roi.height))
+						{
+							set = true;
+							cv::Vec2i &zReg = registered.at<cv::Vec2i>(dy_low, dx_low);
+							if(zReg[0] == 0 || zMM < zReg[0])
+							{
+								zReg[0] = zMM;
+								zReg[1] = i;
+							}
+						}
+						if((dx_low != dx_high || dy_low != dy_high) &&
+							uIsInBounds(dx_high, roi.x, roi.x+roi.width) && uIsInBounds(dy_high, roi.y, roi.y+roi.height))
+						{
+							set = true;
+							cv::Vec2i &zReg = registered.at<cv::Vec2i>(dy_high, dx_high);
+							if(zReg[0] == 0 || zMM < zReg[0])
+							{
+								zReg[0] = zMM;
+								zReg[1] = i;
+							}
+						}
+					}
+					if(set)
+					{
+						count++;
+					}
+				}
+				if(count == 0)
+				{
+					registered = cv::Mat();
+					UINFO("No points projected in camera %d/%d", pter->first, i);
+				}
+				else
+				{
+					UDEBUG("%d points projected in camera %d/%d", count, pter->first, i);
+				}
+				for(int u=0; u<registered.cols; ++u)
+				{
+					for(int v=0; v<registered.rows; ++v)
+					{
+						cv::Vec2i &zReg = registered.at<cv::Vec2i>(v, u);
+						if(zReg[0] > 0)
+						{
+							ProjectionInfo info;
+							info.nodeID = pter->first;
+							info.cameraIndex = i;
+							info.uv.x = float(u)/float(imageSize.width);
+							info.uv.y = float(v)/float(imageSize.height);
+							info.distance = zReg[0]/1000.0f;
+							invertedIndex[zReg[1]].push_back(info);
+						}
+					}
+				}
+			}
+		}
+
+		msg = uFormat("Processed camera %d/%d", (int)cameraProcessed+1, (int)cameraPoses.size());
+		UINFO(msg.c_str());
+		if(state && !state->callback(msg))
+		{
+			//cancelled!
+			UWARN("Projecting to cameras cancelled!");
+			return pointToPixel;
+		}
+		++cameraProcessed;
+	}
+
+	msg = uFormat("Select best camera for %d points...", (int)cloud.size());
+	UINFO(msg.c_str());
+	if(state && !state->callback(msg))
+	{
+		//cancelled!
+		UWARN("Projecting to cameras cancelled!");
+		return pointToPixel;
+	}
+
+	pointToPixel.resize(invertedIndex.size());
+	int colorized = 0;
+
+	// For each point
+	for(size_t i=0; i<invertedIndex.size(); ++i)
+	{
+		if((i+1)%10000 == 0)
+		{
+			UDEBUG("Point %d/%d", i+1, (int)cloud.size());
+			if(state && !state->callback(uFormat("%d/%d points projected to cameras (out of %d points)", colorized, i+1, (int)cloud.size())))
+			{
+				//cancelled!
+				UWARN("Projecting to camera cancelled!");
+				pointToPixel.clear();
+				return pointToPixel;
+			}
+		}
+
+		const PointT & pt = cloud.at(i);
+		int nodeID = -1;
+		int cameraIndex = -1;
+		float smallestWeight = std::numeric_limits<float>::max();
+		pcl::PointXY uv_coords;
+		for (size_t j = 0; j<invertedIndex[i].size(); ++j)
+		{
+			const Transform & cam = cameraPoses.at(invertedIndex[i][j].nodeID);
+			Eigen::Vector4f camDir(cam.x()-pt.x, cam.y()-pt.y, cam.z()-pt.z, 0);
+			Eigen::Vector4f normal(pt.normal_x, pt.normal_y, pt.normal_z, 0);
+			float angleToCam = maxAngle<=0?0:pcl::getAngle3D(normal, camDir);
+			float distanceToCam = invertedIndex[i][j].distance;
+			if( (maxAngle<=0 || (camDir.dot(normal) > 0 && angleToCam < maxAngle)) && // is facing camera? is point normal perpendicular to camera?
+				(maxDistance<=0 || distanceToCam<maxDistance)) // is point not too far from camera?
+			{
+				float vx = invertedIndex[i][j].uv.x-0.5f;
+				float vy = invertedIndex[i][j].uv.y-0.5f;
+
+				float distanceToCenter = vx*vx+vy*vy;
+				float distance = distanceToCenter;
+				if(distanceToCamPolicy)
+				{
+					distance = distanceToCam;
+				}
+				if(distance <= smallestWeight)
+				{
+					nodeID = invertedIndex[i][j].nodeID;
+					cameraIndex = invertedIndex[i][j].cameraIndex;
+					smallestWeight = distance;
+					uv_coords = invertedIndex[i][j].uv;
+				}
+			}
+		}
+
+		if(nodeID>-1 && cameraIndex> -1)
+		{
+			pointToPixel[i].first.first = nodeID;
+			pointToPixel[i].first.second = cameraIndex;
+			pointToPixel[i].second = uv_coords;
+			++colorized;
+		}
+	}
+
+	UINFO("Process %d points...done! (%d [%d%%] projected in cameras)", (int)cloud.size(), colorized, colorized*100/cloud.size());
+
+	return pointToPixel;
+}
+
+std::vector<std::pair< std::pair<int, int>, pcl::PointXY> > projectCloudToCameras (
+		const typename pcl::PointCloud<pcl::PointXYZRGBNormal> & cloud,
+		const std::map<int, Transform> & cameraPoses,
+		const std::map<int, std::vector<CameraModel> > & cameraModels,
+		float maxDistance,
+		float maxAngle,
+		const std::vector<float> & roiRatios,
+		bool distanceToCamPolicy,
+		const ProgressState * state)
+{
+	return projectCloudToCamerasImpl(cloud,
+			cameraPoses,
+			cameraModels,
+			maxDistance,
+			maxAngle,
+			roiRatios,
+			distanceToCamPolicy,
+			state);
+}
+
+std::vector<std::pair< std::pair<int, int>, pcl::PointXY> > projectCloudToCameras (
+		const typename pcl::PointCloud<pcl::PointXYZINormal> & cloud,
+		const std::map<int, Transform> & cameraPoses,
+		const std::map<int, std::vector<CameraModel> > & cameraModels,
+		float maxDistance,
+		float maxAngle,
+		const std::vector<float> & roiRatios,
+		bool distanceToCamPolicy,
+		const ProgressState * state)
+{
+	return projectCloudToCamerasImpl(cloud,
+			cameraPoses,
+			cameraModels,
+			maxDistance,
+			maxAngle,
+			roiRatios,
+			distanceToCamPolicy,
+			state);
 }
 
 bool isFinite(const cv::Point3f & pt)
@@ -3239,17 +3506,53 @@ LaserScan loadScan(const std::string & path)
 	{
 		return LaserScan(loadBINScan(path), 0, 0, LaserScan::kXYZI);
 	}
-	else if(UFile::getExtension(fileName).compare("pcd") == 0)
-	{
-		pcl::PCLPointCloud2::Ptr cloud(new pcl::PCLPointCloud2);
-		pcl::io::loadPCDFile(path, *cloud);
-		return laserScanFromPointCloud(*cloud);
-	}
 	else
 	{
 		pcl::PCLPointCloud2::Ptr cloud(new pcl::PCLPointCloud2);
-		pcl::io::loadPLYFile(path, *cloud);
-		return laserScanFromPointCloud(*cloud);
+
+		if(UFile::getExtension(fileName).compare("pcd") == 0)
+		{
+			pcl::io::loadPCDFile(path, *cloud);
+		}
+		else // PLY
+		{
+			pcl::io::loadPLYFile(path, *cloud);
+		}
+		if(cloud->height > 1)
+		{
+			cloud->is_dense = false;
+		}
+
+		bool is2D = false;
+		if(!cloud->data.empty())
+		{
+			// If all z values are zeros, we assume it is a 2D scan
+			int zOffset = -1;
+			for(unsigned int i=0; i<cloud->fields.size(); ++i)
+			{
+				if(cloud->fields[i].name.compare("z") == 0)
+				{
+					zOffset = cloud->fields[i].offset;
+					break;
+				}
+			}
+			if(zOffset>=0)
+			{
+				is2D = true;
+				for (uint32_t row = 0; row < (uint32_t)cloud->height && is2D; ++row)
+				{
+					const uint8_t* row_data = &cloud->data[row * cloud->row_step];
+					for (uint32_t col = 0; col < (uint32_t)cloud->width && is2D; ++col)
+					{
+						const uint8_t* msg_data = row_data + col * cloud->point_step;
+						float z = *(float*)(msg_data + zOffset);
+						is2D = z == 0.0f;
+					}
+				}
+			}
+		}
+
+		return laserScanFromPointCloud(*cloud, true, is2D);
 	}
 	return LaserScan();
 }

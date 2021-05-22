@@ -2059,7 +2059,29 @@ std::map<int, Transform> Memory::loadOptimizedPoses(Transform * lastlocalization
 {
 	if(_dbDriver)
 	{
-		return _dbDriver->loadOptimizedPoses(lastlocalizationPose);
+		bool ok = true;
+		std::map<int, Transform> poses = _dbDriver->loadOptimizedPoses(lastlocalizationPose);
+		// Make sure optimized poses match the working directory! Otherwise return nothing.
+		for(std::map<int, Transform>::iterator iter=poses.begin(); iter!=poses.end() && ok; ++iter)
+		{
+			if(_workingMem.find(iter->first)==_workingMem.end())
+			{
+				ok = false;
+			}
+		}
+		if(!ok)
+		{
+			UWARN("Optimized poses (%d) and working memory "
+				  "size (%d) don't match. Returning empty optimized "
+				  "poses to force re-update. If you want to use the "
+				  "saved optimized poses, set %s to true",
+				  (int)poses.size(),
+				  (int)_workingMem.size(),
+				  Parameters::kMemInitWMWithAllNodes().c_str());
+			return std::map<int, Transform>();
+		}
+		return poses;
+
 	}
 	return std::map<int, Transform>();
 }
@@ -3053,7 +3075,7 @@ Transform Memory::computeIcpTransformMulti(
 	Transform t;
 	if(!fromScan.isEmpty() && !toScan.isEmpty())
 	{
-		Transform guess = poses.at(fromId).inverse() * poses.at(toId);
+		Transform guess = poses.at(toId).inverse() * poses.at(fromId);
 		float guessNorm = guess.getNorm();
 		if(fromScan.rangeMax() > 0.0f && toScan.rangeMax() > 0.0f &&
 			guessNorm > fromScan.rangeMax() + toScan.rangeMax())
@@ -3144,7 +3166,7 @@ Transform Memory::computeIcpTransformMulti(
 			}
 		}
 
-		cv::Mat assembledScan;
+		LaserScan assembledScan;
 		if(assembledToNormalClouds->size())
 		{
 			assembledScan = fromScan.is2d()?util3d::laserScan2dFromPointCloud(*assembledToNormalClouds):util3d::laserScanFromPointCloud(*assembledToNormalClouds);
@@ -3183,17 +3205,20 @@ Transform Memory::computeIcpTransformMulti(
 				assembledScan = util3d::laserScanFromPointCloud(*assembledToRGBClouds);
 			}
 		}
-		UDEBUG("assembledScan=%d points", assembledScan.cols);
+		UDEBUG("assembledScan=%d points", assembledScan.size());
 
 		// scans are in base frame but for 2d scans, set the height so that correspondences matching works
 		assembledData.setLaserScan(
 				LaserScan(assembledScan,
-					fromScan.maxPoints()?fromScan.maxPoints():maxPoints,
+					maxPoints,
 					fromScan.rangeMax(),
-					toScan.format(),
 					fromScan.is2d()?Transform(0,0,fromScan.localTransform().z(),0,0,0):Transform::getIdentity()));
 
-		t = _registrationIcpMulti->computeTransformation(fromS->sensorData(), assembledData, guess, info);
+		t = _registrationIcpMulti->computeTransformation(assembledData, fromS->sensorData(), guess, info);
+		if(!t.isNull())
+		{
+			t = t.inverse();
+		}
 	}
 
 	return t;
@@ -3532,11 +3557,11 @@ unsigned long Memory::getMemoryUsed() const
 	}
 	memoryUsage += _landmarksIndex.size() * (sizeof(int)+sizeof(std::set<int>) + sizeof(std::map<int, std::set<int> >::iterator)) + sizeof(std::map<int, std::set<int> >);
 	memoryUsage += _landmarksInvertedIndex.size() * (sizeof(int)+sizeof(std::set<int>) + sizeof(std::map<int, std::set<int> >::iterator)) + sizeof(std::map<int, std::set<int> >);
-	for(std::map<int, std::set<int>>::const_iterator iter=_landmarksIndex.begin(); iter!=_landmarksIndex.end(); ++iter)
+	for(std::map<int, std::set<int> >::const_iterator iter=_landmarksIndex.begin(); iter!=_landmarksIndex.end(); ++iter)
 	{
 		memoryUsage+=iter->second.size()*(sizeof(int)+sizeof(std::set<int>::iterator)) + sizeof(std::set<int>);
 	}
-	for(std::map<int, std::set<int>>::const_iterator iter=_landmarksInvertedIndex.begin(); iter!=_landmarksInvertedIndex.end(); ++iter)
+	for(std::map<int, std::set<int> >::const_iterator iter=_landmarksInvertedIndex.begin(); iter!=_landmarksInvertedIndex.end(); ++iter)
 	{
 		memoryUsage+=iter->second.size()*(sizeof(int)+sizeof(std::set<int>::iterator)) + sizeof(std::set<int>);
 	}
@@ -4120,6 +4145,10 @@ Signature * Memory::createSignature(const SensorData & inputData, const Transfor
 		!pose.isNull())
 	{
 		UERROR("Camera calibration not valid, calibrate your camera!");
+		if(data.cameraModels().empty())
+			std::cout << data.stereoCameraModel() << std::endl;
+		else
+			std::cout << data.cameraModels()[0] << std::endl;
 		return 0;
 	}
 	UASSERT(_feature2D != 0);
@@ -4131,7 +4160,7 @@ Signature * Memory::createSignature(const SensorData & inputData, const Transfor
 	float t;
 	std::vector<cv::KeyPoint> keypoints;
 	cv::Mat descriptors;
-	bool isIntermediateNode = data.id() < 0 || (data.imageRaw().empty() && data.keypoints().empty());
+	bool isIntermediateNode = data.id() < 0 || (data.imageRaw().empty() && data.keypoints().empty() && data.laserScanRaw().empty());
 	int id = data.id();
 	if(_generateIds)
 	{
@@ -4205,6 +4234,7 @@ Signature * Memory::createSignature(const SensorData & inputData, const Transfor
 						"full calibration. If images are already rectified, set %s parameter back to true.",
 						(int)i,
 						Parameters::kRtabmapImagesAlreadyRectified().c_str());
+					std::cout << data.cameraModels()[i] << std::endl;
 					return 0;
 				}
 			}
@@ -5246,7 +5276,8 @@ Signature * Memory::createSignature(const SensorData & inputData, const Transfor
 	// Occupancy grid map stuff
 	if(_createOccupancyGrid && !isIntermediateNode)
 	{
-		if(!data.depthOrRightRaw().empty())
+		if( (_occupancy->isGridFromDepth() && !data.depthOrRightRaw().empty()) ||
+			(!_occupancy->isGridFromDepth() && !data.laserScanRaw().empty()))
 		{
 			cv::Mat ground, obstacles, empty;
 			float cellSize = 0.0f;

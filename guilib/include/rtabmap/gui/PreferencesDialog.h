@@ -105,6 +105,8 @@ public:
 		kSrcStereoTara 	   = 106,
 		kSrcStereoRealSense2 = 107,
 		kSrcStereoMyntEye  = 108,
+		kSrcStereoZedOC    = 109,
+		kSrcStereoDepthAI  = 110,
 
 		kSrcRGB            = 200,
 		kSrcUsbDevice      = 200,
@@ -252,6 +254,7 @@ public:
 	bool isSourceDatabaseStereoToDepth() const;
 	bool isSourceRGBDColorOnly() const;
 	int getIMUFilteringStrategy() const;
+	bool getIMUFilteringBaseFrameConversion() const;
 	bool isDepthFilteringAvailable() const;
 	QString getSourceDistortionModel() const;
 	bool isBilateralFiltering() const;
@@ -308,7 +311,7 @@ public Q_SLOTS:
 	void setDetectionRate(double value);
 	void setTimeLimit(float value);
 	void setSLAMMode(bool enabled);
-	void selectSourceDriver(Src src);
+	void selectSourceDriver(Src src, int variant = 0);
 	void calibrate();
 	void calibrateSimple();
 
@@ -335,13 +338,14 @@ private Q_SLOTS:
 	void useOdomFeatures();
 	void changeWorkingDirectory();
 	void changeDictionaryPath();
-	void changeOdometryORBSLAM2Vocabulary();
+	void changeOdometryORBSLAMVocabulary();
 	void changeOdometryOKVISConfigPath();
 	void changeOdometryVINSConfigPath();
 	void changeIcpPMConfigPath();
 	void changeSuperPointModelPath();
 	void changePyMatcherPath();
 	void changePyMatcherModel();
+	void changePyDetectorPath();
 	void readSettingsEnd();
 	void setupTreeView();
 	void updateBasicParameter();
